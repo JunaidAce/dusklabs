@@ -1,0 +1,34 @@
+{
+  "name": "dusklabs",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/shared",
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "db:sync:sqlite": "tsx apps/api/scripts/sync-sqlite-schema.ts",
+    "db:generate:pg": "prisma generate --schema=apps/api/prisma/schema.prisma",
+    "db:generate:sqlite": "npm run db:sync:sqlite && prisma generate --schema=apps/api/prisma/schema.sqlite.prisma",
+    "db:migrate:pg": "prisma migrate dev --schema=apps/api/prisma/schema.prisma",
+    "db:push:sqlite": "npm run db:sync:sqlite && prisma db push --schema=apps/api/prisma/schema.sqlite.prisma",
+    "db:seed": "tsx apps/api/prisma/seed.ts",
+    "test:api": "npm --workspace=apps/api run test",
+    "dev:api": "npm --workspace=apps/api run dev",
+    "dev:web": "npm --workspace=apps/web run dev"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "allowScripts": {
+    "@prisma/client@5.22.0": true,
+    "@prisma/engines@5.22.0": true,
+    "argon2@0.41.1": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true,
+    "prisma@5.22.0": true
+  }
+}

@@ -1,0 +1,733 @@
+// AUTO-GENERATED FOR ACADEMIC SQLITE EVALUATION — DO NOT EDIT DIRECTLY
+// Source: apps/api/prisma/schema.prisma
+
+// DuskLabs Prisma schema — reconstructed from AI Studio chat (Phase 2.2 base + Phase 3.x–5.4 model-level merges)
+// Provenance: chunk 8 (base) merged with chunks 17, 20, 23, 26, 29, 32, 35, 38, 53, 56, 62, 68, 71, 74.
+// PostgreSQL is the production provider; apps/api/scripts/sync-sqlite-schema.ts derives the SQLite variant.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String    @id @default(cuid())
+  username               String    @unique
+  displayName            String
+  email                  String    @unique
+  passwordHash           String
+  country                String?
+  avatarUrl              String?
+  bio                    String?
+  accountStatus          String    @default("ACTIVE")
+  emailVerifiedAt        DateTime?
+  emailVerifyTokenHash   String?
+  emailVerifyExpiresAt   DateTime?
+  passwordResetTokenHash String?
+  passwordResetExpiresAt DateTime?
+  failedLoginAttempts    Int       @default(0)
+  lockedUntil            DateTime?
+  lastLoginAt            DateTime?
+  suspendedUntil         DateTime?
+  showAchievementsOnProfile Boolean @default(true)
+  version                Int       @default(1)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  deletedAt              DateTime?
+
+  roles                     UserRole[]
+  sessions                  Session[]
+  teamMemberships           TeamMember[]
+  captainedTeams            Team[]                        @relation("TeamCaptain")
+  sentTeamInvitations       TeamInvitation[]              @relation("InvitationSender")
+  receivedTeamInvitations   TeamInvitation[]              @relation("InvitationRecipient")
+  createdCompetitions       Competition[]                 @relation("CompetitionCreator")
+  managedCompetitions       CompetitionOrganizer[]        @relation("ManagedCompetitions")
+  competitionRegistrations  CompetitionRegistration[]
+  authoredChallenges        Challenge[]                   @relation("ChallengeAuthor")
+  createdChallenges         Challenge[]                   @relation("ChallengeCreator")
+  uploadedAttachments       ChallengeAttachment[]         @relation("AttachmentUploader")
+  submissions               Submission[]
+  solves                    Solve[]
+  hintUnlocks               HintUnlock[]
+  scoreTransactions         ScoreTransaction[]            @relation("UserScoreTransactions")
+  actedScoreTransactions    ScoreTransaction[]            @relation("ActorScoreTransactions")
+  achievements              UserAchievement[]
+  notifications             Notification[]
+  auditLogs                 AuditLog[]                    @relation("AuditActor")
+  filedReports              Report[]                      @relation("ReportAuthor")
+  resolvedReports           Report[]                      @relation("ReportResolver")
+  reportsAgainst            Report[]                      @relation("ReportTarget")
+  assignedReports           Report[]                      @relation("ReportAssignee")
+  announcements             Announcement[]
+  submittedContactInquiries ContactInquiry[]              @relation("ContactSubmitter")
+  reviewedContactInquiries  ContactInquiry[]              @relation("ContactReviewer")
+  assignedContactInquiries  ContactInquiry[]              @relation("ContactAssignee")
+  moderationHistory         AccountModerationRecord[]     @relation("ModeratedUser")
+  moderationsPerformed      AccountModerationRecord[]     @relation("ModerationActor")
+  disputeCorrections        SubmissionDisputeCorrection[] @relation("DisputeAdmin")
+  updatedPlatformSettings   PlatformSettings[]            @relation("SettingsUpdater")
+
+  @@index([accountStatus])
+}
+
+model Session {
+  id           String    @id @default(cuid())
+  userId       String
+  tokenHash    String    @unique
+  csrfSecret   String
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  lastActiveAt DateTime  @default(now())
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  isSystem    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String @id @default(cuid())
+  key         String @unique
+  description String
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  assignedBy String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model Team {
+  id         String    @id @default(cuid())
+  name       String    @unique
+  slug       String    @unique
+  logoUrl    String?
+  bio        String?
+  captainId  String
+  inviteCode String    @unique
+  isLocked   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  captain           User               @relation("TeamCaptain", fields: [captainId], references: [id])
+  members           TeamMember[]
+  invitations       TeamInvitation[]
+  competitions      CompetitionTeam[]
+  submissions       Submission[]
+  solves            Solve[]
+  hintUnlocks       HintUnlock[]
+  scoreTransactions ScoreTransaction[]
+
+  @@index([captainId])
+}
+
+model TeamMember {
+  id       String   @id @default(cuid())
+  teamId   String
+  userId   String
+  role     String   @default("MEMBER")
+  joinedAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+model TeamInvitation {
+  id            String    @id @default(cuid())
+  teamId        String
+  type          String    @default("INVITE") // INVITE | REQUEST
+  invitedById   String
+  invitedUserId String?
+  email         String?
+  message       String?
+  tokenHash     String    @unique
+  status        String    @default("PENDING") // PENDING | ACCEPTED | DECLINED | EXPIRED | REVOKED
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+  respondedAt   DateTime?
+
+  team        Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  invitedBy   User  @relation("InvitationSender", fields: [invitedById], references: [id])
+  invitedUser User? @relation("InvitationRecipient", fields: [invitedUserId], references: [id])
+
+  @@index([teamId, type, status])
+  @@index([invitedUserId, status])
+}
+
+model Competition {
+  id                       String    @id @default(cuid())
+  slug                     String    @unique
+  title                    String
+  description              String
+  bannerUrl                String?
+  rules                    String
+  status                   String    @default("DRAFT")
+  isVisible                Boolean   @default(false)
+  timezone                 String    @default("UTC")
+  participationMode        String    @default("TEAM")
+  maxTeamSize              Int       @default(4)
+  minTeamSize              Int       @default(1)
+  lockTeamRosterOnLive     Boolean   @default(true)
+  scoringMode              String    @default("DYNAMIC") // STATIC | DYNAMIC
+  dynamicScoringPolicy     String    @default("RETROACTIVE") // RETROACTIVE | LOCK_AT_SOLVE
+  allowNegativeScores      Boolean   @default(false)
+  firstBloodEnabled        Boolean   @default(true)
+  allowRegistrationCancel  Boolean   @default(true)
+  registrationOpenAt       DateTime?
+  registrationCloseAt      DateTime?
+  cancellationCutoffAt     DateTime?
+  startsAt                 DateTime
+  endsAt                   DateTime
+  pausedAt                 DateTime?
+  completedAt              DateTime?
+  archivedAt               DateTime?
+  version                  Int       @default(1)
+  createdById              String
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  createdBy         User                      @relation("CompetitionCreator", fields: [createdById], references: [id])
+  organizers        CompetitionOrganizer[]
+  registrations     CompetitionRegistration[]
+  teams             CompetitionTeam[]
+  challenges        Challenge[]
+  submissions       Submission[]
+  solves            Solve[]
+  hintUnlocks       HintUnlock[]
+  scoreTransactions ScoreTransaction[]
+  announcements     Announcement[]
+  userAchievements  UserAchievement[]
+  reports           Report[]
+  registrationEvents RegistrationEvent[]
+
+  @@index([status, startsAt, endsAt])
+}
+
+model CompetitionOrganizer {
+  competitionId String
+  userId        String
+  assignedById  String?
+  assignedAt    DateTime @default(now())
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  user        User        @relation("ManagedCompetitions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([competitionId, userId])
+  @@index([userId])
+}
+
+model CompetitionRegistration {
+  id             String    @id @default(cuid())
+  competitionId  String
+  userId         String
+  teamId         String?
+  status         String    @default("CONFIRMED") // CONFIRMED | WITHDRAWN | DISQUALIFIED
+  registeredById String?
+  registeredAt   DateTime  @default(now())
+  cancelledAt    DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([competitionId, userId])
+  @@index([competitionId, status])
+  @@index([competitionId, teamId])
+}
+
+model CompetitionTeam {
+  id             String    @id @default(cuid())
+  competitionId  String
+  teamId         String
+  status         String    @default("CONFIRMED") // CONFIRMED | WITHDRAWN | DISQUALIFIED
+  registeredById String?
+  registeredAt   DateTime  @default(now())
+  cancelledAt    DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  team        Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([competitionId, teamId])
+}
+
+model RegistrationEvent {
+  id            String   @id @default(cuid())
+  competitionId String
+  userId        String
+  teamId        String?
+  action        String   // REGISTERED | CANCELLED | DISQUALIFIED | REINSTATED
+  actorId       String
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@index([competitionId, userId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  challenges ChallengeCategory[]
+}
+
+model Challenge {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  description     String
+  connectionInfo  String?
+  difficulty      String
+  challengeType   String   @default("JEOPARDY_FILE")
+  status          String   @default("DRAFT")
+  isVisible       Boolean  @default(false)
+  scoringMode     String   @default("STATIC")
+  points          Int
+  initialPoints   Int
+  minPoints       Int      @default(50)
+  decayRate       Int      @default(20)
+  firstBloodBonus Int      @default(0)
+  maxAttempts     Int      @default(0)
+  allowNegativeScore Boolean @default(false)
+  firstBloodUserId   String?
+  firstBloodTeamId   String?
+  firstBloodAt       DateTime?
+  competitionId   String?
+  authorId        String?
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  competition       Competition?          @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  author            User?                 @relation("ChallengeAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  createdBy         User?                 @relation("ChallengeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  categories        ChallengeCategory[]
+  tags              ChallengeTag[]
+  attachments       ChallengeAttachment[]
+  flagConfiguration FlagConfiguration?
+  hints             Hint[]
+  submissions       Submission[]
+  solves            Solve[]
+  reports           Report[]
+
+  @@index([competitionId, status, isVisible])
+  @@index([authorId])
+}
+
+model ChallengeCategory {
+  challengeId String
+  categoryId  String
+
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  category  Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([challengeId, categoryId])
+}
+
+model ChallengeTag {
+  id          String @id @default(cuid())
+  challengeId String
+  tag         String
+
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, tag])
+}
+
+model ChallengeAttachment {
+  id                String   @id @default(cuid())
+  challengeId       String
+  uploadedById      String?
+  originalName      String
+  storageKey        String   @unique // Server-generated UUID filename in vault
+  mimeType          String
+  sizeBytes         Int
+  sha256            String
+  archiveEntryCount Int?
+  inspectionEngine  String   @default("RUST") // RUST | TS_FALLBACK
+  downloadCount     Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  challenge  Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  uploadedBy User?     @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([challengeId])
+}
+
+model FlagConfiguration {
+  id             String   @id @default(cuid())
+  challengeId    String   @unique
+  flagType       String
+  flagDigest     String?
+  encryptedFlag  String?
+  dynamicPattern String?
+  updatedAt      DateTime @updatedAt
+
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+}
+
+model Hint {
+  id                   String   @id @default(cuid())
+  challengeId          String
+  sortOrder            Int
+  title                String
+  content              String   // Never exposed until unlocked
+  costPoints           Int      @default(0)
+  isAvailable          Boolean  @default(true)
+  requiresPreviousHint Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  challenge Challenge    @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  unlocks   HintUnlock[]
+
+  @@unique([challengeId, sortOrder])
+}
+
+model HintUnlock {
+  id            String   @id @default(cuid())
+  hintId        String
+  userId        String
+  teamId        String?
+  competitionId String?
+  costApplied   Int
+  unlockedAt    DateTime @default(now())
+
+  hint              Hint               @relation(fields: [hintId], references: [id], onDelete: Cascade)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team              Team?              @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  competition       Competition?       @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  scoreTransactions ScoreTransaction[]
+
+  @@unique([hintId, userId])
+  @@unique([hintId, teamId])
+}
+
+model Submission {
+  id            String   @id @default(cuid())
+  challengeId   String
+  competitionId String?
+  userId        String
+  teamId        String?
+  submittedHash String
+  isCorrect     Boolean
+  ipAddress     String?
+  submittedAt   DateTime @default(now())
+
+  challenge            Challenge                     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  competition          Competition?                  @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  user                 User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team                 Team?                         @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  disputeCorrections   SubmissionDisputeCorrection[]
+
+  @@index([challengeId, userId, submittedAt])
+  @@index([competitionId, isCorrect])
+}
+
+model SubmissionDisputeCorrection {
+  id                 String   @id @default(cuid())
+  submissionId       String
+  action             String   // CREDIT_POINTS | REVOKE_POINTS | UPHOLD_ORIGINAL
+  previousState      String
+  resultingState     String
+  deltaPoints        Int      @default(0)
+  reason             String
+  scoreTransactionId String?
+  adminId            String
+  createdAt          DateTime @default(now())
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  admin      User       @relation("DisputeAdmin", fields: [adminId], references: [id])
+
+  @@index([submissionId, createdAt])
+}
+
+model Solve {
+  id                    String   @id @default(cuid())
+  challengeId           String
+  competitionId         String?
+  userId                String
+  teamId                String?
+  isFirstBlood          Boolean  @default(false)
+  firstBloodChallengeId String?  @unique // Populated ONLY on the winning First Blood solve
+  pointsAwarded         Int
+  solvedAt              DateTime @default(now())
+
+  challenge         Challenge          @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  competition       Competition?       @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team              Team?              @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  scoreTransactions ScoreTransaction[]
+
+  @@unique([challengeId, userId])
+  @@unique([challengeId, teamId])
+  @@index([competitionId, solvedAt])
+}
+
+model ScoreTransaction {
+  id             String   @id @default(cuid())
+  userId         String
+  teamId         String?
+  competitionId  String?
+  solveId        String?
+  hintUnlockId   String?
+  idempotencyKey String?  @unique
+  deltaPoints    Int
+  type           String   // SOLVE | FIRST_BLOOD | HINT_PENALTY | DYNAMIC_RECALC | MANUAL_ADJUSTMENT
+  reason         String
+  actorId        String?
+  createdAt      DateTime @default(now())
+
+  user        User         @relation("UserScoreTransactions", fields: [userId], references: [id], onDelete: Cascade)
+  actor       User?        @relation("ActorScoreTransactions", fields: [actorId], references: [id], onDelete: SetNull)
+  team        Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  competition Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  solve       Solve?       @relation(fields: [solveId], references: [id], onDelete: SetNull)
+  hintUnlock  HintUnlock?  @relation(fields: [hintUnlockId], references: [id], onDelete: SetNull)
+
+  @@index([competitionId, userId])
+  @@index([competitionId, teamId])
+  @@index([createdAt])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String
+  ruleType    String   // FIRST_BLOOD | TOTAL_SOLVES | CATEGORY_SOLVES:<slug> | COMPETITION_PARTICIPATION | COMPETITION_CHAMPION
+  threshold   Int      @default(1)
+  tier        String   @default("BRONZE") // BRONZE | SILVER | GOLD | APEX
+  iconKey     String   @default("HEX_CORE")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  awards UserAchievement[]
+}
+
+model UserAchievement {
+  id                 String   @id @default(cuid())
+  userId             String
+  achievementId      String
+  competitionId      String?
+  teamId             String?
+  challengeId        String?
+  awardScopeKey      String   @default("GLOBAL") // "GLOBAL" or competitionId
+  awardedName        String
+  awardedDescription String
+  awardedTier        String   @default("BRONZE")
+  awardedIcon        String   @default("HEX_CORE")
+  awardedAt          DateTime @default(now())
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement  @relation(fields: [achievementId], references: [id], onDelete: Restrict)
+  competition Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, achievementId, awardScopeKey])
+  @@index([userId, awardedAt])
+}
+
+model Announcement {
+  id            String   @id @default(cuid())
+  competitionId String?  // Null = platform-wide announcement
+  authorId      String
+  title         String
+  body          String
+  isPinned      Boolean  @default(false)
+  publishedAt   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  competition Competition? @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  author      User         @relation(fields: [authorId], references: [id])
+
+  @@index([competitionId, publishedAt])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String    // COMP_REG | COMP_LIVE | COMP_END | TEAM_INVITE | TEAM_UPDATE | SOLVE | ANNOUNCEMENT | ACHIEVEMENT
+  title     String
+  message   String
+  linkUrl   String?
+  dedupeKey String?
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, isRead, createdAt])
+}
+
+model ContactInquiry {
+  id           String    @id @default(cuid())
+  userId       String?
+  name         String
+  email        String
+  category     String    // GENERAL | COMPETITION | SECURITY_DISCLOSURE | ACCOUNT_SUPPORT | PARTNERSHIP
+  subject      String
+  message      String
+  status       String    @default("OPEN") // OPEN | IN_REVIEW | RESOLVED | CLOSED
+  ipHash       String?
+  adminNotes   String?
+  reviewedById String?
+  assignedAdminId String?
+  version      Int       @default(1)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  resolvedAt   DateTime?
+
+  user       User? @relation("ContactSubmitter", fields: [userId], references: [id], onDelete: SetNull)
+  reviewedBy User? @relation("ContactReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  assignedAdmin User? @relation("ContactAssignee", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
+model AccountModerationRecord {
+  id             String    @id @default(cuid())
+  userId         String
+  action         String    // SUSPENDED | BANNED | RESTORED
+  previousStatus String
+  newStatus      String
+  reason         String
+  actorId        String?   // Null when temporary suspension auto-expires at login
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  user  User  @relation("ModeratedUser", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("ModerationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
+
+model Report {
+  id                  String    @id @default(cuid())
+  reporterId          String
+  competitionId       String?
+  challengeId         String?
+  targetUserId        String?
+  submissionId        String?
+  category            String    // BUG | DISPUTE | CHEATING | ABUSE
+  description         String
+  isAnonymous         Boolean   @default(false)
+  status              String    @default("OPEN") // OPEN | UNDER_REVIEW | RESOLVED | DISMISSED
+  assignedModeratorId String?
+  internalNotes       String?
+  resolution          String?
+  resolvedById        String?
+  version             Int       @default(1)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  resolvedAt          DateTime?
+
+  reporter          User         @relation("ReportAuthor", fields: [reporterId], references: [id])
+  resolvedBy        User?        @relation("ReportResolver", fields: [resolvedById], references: [id])
+  assignedModerator User?        @relation("ReportAssignee", fields: [assignedModeratorId], references: [id], onDelete: SetNull)
+  targetUser        User?        @relation("ReportTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  competition       Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  challenge         Challenge?   @relation(fields: [challengeId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([targetUserId, status])
+  @@index([assignedModeratorId, status])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  actorId        String?
+  actorRole      String?
+  category       String   @default("SYSTEM") // AUTH | USER_ADMIN | COMPETITION | CHALLENGE | SCORING | MODERATION | TEAM | ACHIEVEMENT | SYSTEM
+  action         String
+  entityType     String
+  entityId       String?
+  previousValues String?  // Redacted JSON
+  newValues      String?  // Redacted JSON
+  metadata       String?  // Redacted JSON
+  correlationId  String?
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt, id])
+  @@index([category, createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+}
+
+model PlatformSettings {
+  id                               String   @id @default("default")
+  platformName                     String   @default("DuskLabs")
+  tagline                          String   @default("Where Curiosity Meets Exploitation")
+  registrationEnabled              Boolean  @default(true)
+  registrationCode                 String?
+  requireEmailVerificationForLogin Boolean  @default(false)
+  teamCreationEnabled              Boolean  @default(true)
+  defaultMaxTeamSize               Int      @default(20)
+  flagSubmissionMaxAttemptsPerMin  Int      @default(5)
+  maintenanceMode                  Boolean  @default(false)
+  maintenanceMessage               String?
+  contactFormEnabled               Boolean  @default(true)
+  scoreboardVisible                Boolean  @default(true)
+  challengesVisible                Boolean  @default(true)
+  version                          Int      @default(1)
+  updatedById                      String?
+  updatedAt                        DateTime @updatedAt
+
+  updatedBy User? @relation("SettingsUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+}

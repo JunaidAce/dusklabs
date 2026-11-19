@@ -1,0 +1,56 @@
+:root {
+  /* Anime "Akatsuki ink / Naruto ember" theme */
+  --color-black: #08070b;
+  --color-white: #f7f1e8;
+  --color-gold: #ff7a18;
+  --color-gold-hover: #ffa14a;
+  --color-red: #d21f2b;
+  --color-red-soft: #ff4d5a;
+  --color-red-glow: rgba(210, 31, 43, 0.34);
+  --color-cloud: #b3121f;
+  --color-paper: #f2e7d8;
+
+  /* Surface & neutral steps */
+  --surface-iron: #121016;
+  --surface-charcoal: #1b1820;
+  --text-smoke: #f5ece1;
+  --text-ash: #b9aa9d;
+  --text-steel: #e0d4c8;
+  --border-hairline: #43232a;
+  --border-ghost: rgba(247, 241, 232, 0.28);
+  --overlay-backdrop: rgba(8, 7, 11, 0.88);
+
+  /* Typography */
+  --font-display: 'Bebas Neue', 'Rajdhani', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  --font-ui: 'Rajdhani', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  --font-jp: 'Noto Sans JP', 'Rajdhani', sans-serif;
+
+  /* Scale */
+  --text-hero: clamp(58px, 8.6vw, 138px);
+  --text-display-2: clamp(34px, 5vw, 82px);
+  --text-section: clamp(28px, 3.4vw, 58px);
+  --text-sub: clamp(22px, 2.5vw, 40px);
+  --text-feature: 27px;
+  --text-card: 24px;
+  --text-body-lg: 18px;
+  --text-body: 16px;
+  --text-caption: 14px;
+  --text-label: 12px;
+  --text-micro: 10px;
+
+  /* Spacing (8px base unit) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 40px;
+  --sp-8: 48px;
+  --sp-9: 56px;
+
+  --container-max: 1440px;
+  --content-max: 1200px;
+  --radius-sharp: 6px;
+  --radius-badge: 999px;
+}

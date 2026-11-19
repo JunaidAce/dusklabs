@@ -1,0 +1,38 @@
+﻿# dependencies/build
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+.vite/
+coverage/
+
+# env/secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# local databases & runtime data
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+apps/api/prisma/dev.db
+apps/api/storage/
+**/storage/
+uploads/
+logs/
+*.log
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Rust (if built later)
+services/rust/target/

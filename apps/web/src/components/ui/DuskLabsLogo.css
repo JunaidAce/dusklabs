@@ -1,0 +1,49 @@
+.dl-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-white);
+}
+
+.dl-logo-stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.dl-logo-mark {
+  display: block;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 14px rgba(210, 31, 43, 0.24));
+}
+
+.dl-logo-wordmark {
+  font-family: var(--font-ui);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.4px;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.dl-wordmark-dusk {
+  color: var(--color-white);
+}
+
+.dl-wordmark-labs {
+  color: var(--color-red-soft);
+  text-shadow: 0 0 18px rgba(210, 31, 43, 0.48);
+}
+
+.dl-logo-stacked .dl-logo-wordmark {
+  font-size: clamp(64px, 8.5vw, 112px);
+  line-height: 0.9;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+  .dl-logo-stacked .dl-logo-wordmark {
+    font-size: clamp(54px, 14vw, 82px);
+  }
+}

@@ -1,0 +1,125 @@
+.dl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 0px;
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 140ms ease, opacity 140ms ease, border-color 140ms ease;
+  text-decoration: none;
+  min-height: 48px;
+}
+
+.dl-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dl-btn-gold {
+  background-color: var(--color-gold);
+  color: var(--color-black);
+  border: 1px solid var(--color-gold);
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.dl-btn-gold:hover:not(:disabled) {
+  background-color: var(--color-gold-hover);
+  border-color: var(--color-gold-hover);
+  color: var(--color-black);
+}
+
+.dl-btn-ghost {
+  background-color: transparent;
+  color: var(--color-white);
+  border: 1px solid var(--border-ghost);
+  padding: 16px 20px;
+  font-size: 14.4px;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+}
+
+.dl-btn-ghost:hover:not(:disabled) {
+  background-color: var(--surface-charcoal);
+  border-color: var(--color-white);
+  color: var(--color-white);
+}
+
+.dl-btn-white {
+  background-color: var(--color-white);
+  color: var(--surface-charcoal);
+  border: 1px solid var(--color-white);
+  padding: 14px 20px;
+  font-size: 14.4px;
+}
+
+.dl-card {
+  background-color: var(--surface-charcoal);
+  border: 1px solid var(--border-hairline);
+  border-radius: 0px;
+  padding: var(--sp-5);
+}
+
+.dl-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.dl-input {
+  width: 100%;
+  min-height: 48px;
+  background-color: var(--color-black);
+  color: var(--color-white);
+  border: 1px solid var(--text-ash);
+  border-radius: 0px;
+  padding: 12px 16px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+}
+
+.dl-input:focus {
+  outline: none;
+  border-color: var(--color-gold);
+}
+
+.dl-field-error {
+  font-size: var(--text-label);
+  color: var(--color-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dl-badge {
+  display: inline-block;
+  background-color: var(--surface-charcoal);
+  border: 1px solid var(--text-ash);
+  color: var(--color-white);
+  padding: 4px 8px;
+  font-size: var(--text-micro);
+  letter-spacing: 0.225px;
+  text-transform: uppercase;
+  border-radius: var(--radius-badge);
+}
+
+.dl-badge-gold {
+  background-color: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-black);
+}
+
+.dl-banner {
+  padding: var(--sp-4);
+  border: 1px solid var(--color-white);
+  background-color: var(--surface-iron);
+  margin-bottom: var(--sp-5);
+  font-size: 14px;
+}
+
+.dl-banner-gold {
+  border-color: var(--color-gold);
+}
